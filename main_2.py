@@ -96,6 +96,8 @@ else:
 print(menu_list)
 
 
+
+
 #시간표 api
 url_scj = "https://open.neis.go.kr/hub/hisTimetable"
 
@@ -169,7 +171,9 @@ def api_sbjt(grade,sc_class):
 
     global sbjt_td, sbjt_tm
     response_scj = requests.get(url_scj, params=params_sbjt_td)
+    print(response_scj)
     data_sbjt_td = response_scj.json()
+    print(data_sbjt_td)
     if 'hisTimetable' in data_sbjt_td:
         rows = data_sbjt_td['hisTimetable'][1]['row']
         sbjt_td = [subject_map.get(row['ITRT_CNTNT'],row['ITRT_CNTNT']) for row in rows]
@@ -253,7 +257,7 @@ for t in next_12h_str:
 
 #현재 날씨 정보
 temp = fc_dict.get('T1H')  # 기온
-humidity = fc_dict.get('REH')  # 습도
+humidity = str(fc_dict.get('REH'))  # 습도
 rain_type = fc_dict.get('PTY')  # 강수형태
 rain_1h = fc_dict.get('RN1')  # 1시간 강수량
 
@@ -468,14 +472,14 @@ img_weather3 = Image.open(r"D:\hajun\개인\VScode\pythonworkspace\.vscode\단�
 img_weather4 = Image.open(r"D:\hajun\개인\VScode\pythonworkspace\.vscode\단대소고\사진\바람.png")
 
 #날씨 아이콘
-# if rain_type == "0":
-#     img_weather = img_weather0 # 맑음
-# elif rain_type == "1"or"4":
-#     img_weather = img_weather2 # 비
-# elif rain_type == "2"or"3":
-#     img_weather = img_weather3 # 눈
+if rain_type == "0":
+    img_weather = img_weather0 # 맑음
+elif rain_type == "1"or"4":
+    img_weather = img_weather2 # 비
+elif rain_type == "2"or"3":
+    img_weather = img_weather3 # 눈
 
-img_weather = img_weather0 # 임시 맑음
+# img_weather = img_weather0 # 임시 맑음
 
 img_resized_weather = img_weather.resize((75, 75), Image.LANCZOS)
 img_weather = ImageTk.PhotoImage(img_resized_weather, master=win)
@@ -486,8 +490,8 @@ lbl_weather.pack(side="left", padx=10, pady=10)
 
 
 
-temp = "25°C"  # 임시 기온
-humidity = "60"  # 임시 습도
+# temp = "25°C"  # 임시 기온
+# humidity = "60"  # 임시 습도
 
 #안내라벨
 lbl_temp = Label(frm_weather, text=temp, font=font_temp, fg=blue)
