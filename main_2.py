@@ -12,7 +12,7 @@ win = Tk()
 
 
 
-
+#배경사진
 # image = Image.open(r"D:\hajun\개인\VScode\pythonworkspace\.vscode\단대소고\사진\bg.jpg")
 # bg_image = ImageTk.PhotoImage(image)
 
