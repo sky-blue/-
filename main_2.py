@@ -32,7 +32,7 @@ def base_time():
     if now.minute < 45:
         now -= timedelta(hours=1)
     base_time = now.strftime("%H") + "00"
-    # print(base_time)
+    print(base_time)
     return base_time
 
 
@@ -197,71 +197,47 @@ api_sbjt(1,1)
 
 
 #날씨 API
-url_fc = "http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst"
-# url_fc = "https://apihub.kma.go.kr/api/typ02/openApi/VilageFcstInfoService_2.0/getVilageFcst"
+# url_fc = "http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst"
+# # url_fc = "https://apihub.kma.go.kr/api/typ02/openApi/VilageFcstInfoService_2.0/getVilageFcst"
 
 
-base_time = base_time()
+# base_time = base_time()
 
-params_fc = {
-    "serviceKey" : key_fc,
-    "numOfRows" : "1000",
-    "pageNo" : "1",
-    "dataType" : "json",
-    "base_date" : today,
-    "base_time" : base_time,
-    "nx" :"61",
-    "ny" : "125"
-}
+# params_fc = {
+#     "serviceKey" : key_fc,
+#     "numOfRows" : "1000",
+#     "pageNo" : "1",
+#     "dataType" : "json",
+#     "base_date" : today,
+#     "base_time" : base_time,
+#     "nx" :"61",
+#     "ny" : "125"
+# }
 
-response_fc = requests.get(url_fc, params=params_fc)
+# response_fc = requests.get(url_fc, params=params_fc)
+# data_fc = response_fc.json()
+# print(data_fc)
 
-data_fc = response_fc.json()
-fcdata = data_fc["response"]["body"]["items"]["item"]
-
-print(response_fc.text)
-
-
-# 3️⃣ 현재 시간 기준으로 데이터 정리
-# 시간별, 카테고리별 딕셔너리 생성
-fc_dict = {}
-for item in fcdata:
-    t = item['baseTime']  #fcstTime
-    category = item['category']
-    value = item['obsrValue']  #fcstValue
-    fc_dict.setdefault(t, {})[category] = value
-
-# 4️⃣ 현재 날씨: 첫 번째 데이터 기준 시간
-latest_time = fcdata[0]['baseTime']  #fcstTime
-current_weather = fc_dict[latest_time]
-
-rain_type = current_weather.get("PTY")  # 강수형태
-temp      = current_weather.get("T1H")  # 기온
-humidity  = current_weather.get("REH")  # 습도
-
-
-print(current_weather)
-
-# 5️⃣ 현재 시각부터 12시간 후까지 1시간 간격 예보
-now = datetime.now()
-next_12h = [now + timedelta(hours=i) for i in range(0, 13)]
-next_12h_str = [dt.strftime("%H%M") for dt in next_12h]
-
-print("\n📊 12시간 예보 (1시간 단위):")
-for t in next_12h_str:
-    if t in fc_dict:
-        print(t, fc_dict[t])
+# fcdata = data_fc["response"]["body"]["items"]["item"]
+# temp = ""
+# humidity = ""
+# rain_type = ""
+# rain_1h = ""
+# for item in fcdata:
+#     if item["category"] == "T1H":
+#         temp = str(item["obsrValue"]) + "°C"
+#     elif item["category"] == "REH":
+#         humidity = str(item["obsrValue"]) + "%"
+#     elif item["category"] == "PTY":
+#         rain_type = item["obsrValue"]
+#     elif item["category"] == "RN1":
+#         rain_1h = item["obsrValue"]
 
 
 
+# print(temp, humidity, rain_type, rain_1h)
 
-#현재 날씨 정보
-temp = fc_dict.get('T1H')  # 기온
-humidity = str(fc_dict.get('REH'))  # 습도
-rain_type = fc_dict.get('PTY')  # 강수형태
-rain_1h = fc_dict.get('RN1')  # 1시간 강수량
-
-img_weather_fc = []
+# img_weather_fc = []
 
 
 
@@ -416,41 +392,40 @@ btn_sbjt.grid(row=0,column=2, padx=5, pady=5)
 
 
 
+#날씨 API
+url = "https://api.open-meteo.com/v1/forecast"
+params = {
+    "latitude": 37.2971,
+    "longitude": 127.1293,
+    "hourly": "temperature_2m,weathercode,relative_humidity_2m,precipitation_probability",
+    "timezone": "Asia/Seoul",
+    "forecast_days": 2,
+}
 
-# url = "https://api.open-meteo.com/v1/forecast"
-# params = {
-#     "latitude": 37.2971,
-#     "longitude": 127.1293,
-#     "hourly": "temperature_2m,weathercode,relative_humidity_2m,wind_direction_10m,precipitation_probability",
-#     "timezone": "Asia/Seoul",
-#     "forecast_days": 1,
-# }
+response = requests.get(url, params=params)
+data = response.json()
 
-# response = requests.get(url, params=params)
-# data = response.json()
+print(data)
 
-# print(data)
+fc = data["hourly"]
 
-# fc = data["hourly"]
+# print(fc)
 
-# # print(fc)
-
-# def weather(code):
-#     if code == 0:
-#         return 0 #맑음
-#     elif code in [1, 2, 3]:
-#         return 1 #구름
-#     elif code in [51, 53, 55, 61, 63, 65, 80, 81, 82]:
-#         return 2 #비
-#     elif code in [71, 73, 75, 77, 85, 86]:
-#         return 3 #눈
+def weather(code):
+    if code == 0:
+        return 0 #맑음
+    elif code in [1, 2, 3]:
+        return 1 #구름
+    elif code in [51, 53, 55, 61, 63, 65, 80, 81, 82]:
+        return 2 #비
+    elif code in [71, 73, 75, 77, 85, 86]:
+        return 3 #눈
 
 
-# #현재 날씨 정보
-# temp = str(fc["temperature_2m"][ntime])+"°C"
-# humidity = str(fc["relative_humidity_2m"][ntime])+"%"
-# wind_dir = str(fc["wind_direction_10m"][ntime])+"°"
-# precip_prob = str(fc["precipitation_probability"][ntime])+"%"
+#현재 날씨 정보
+temp = str(fc["temperature_2m"][ntime])+"°C"
+humidity = str(fc["relative_humidity_2m"][ntime])+"%"
+precip_prob = str(fc["precipitation_probability"][ntime])+"%"
 
 
 
@@ -465,21 +440,31 @@ frm_weather.grid(row=0, column=0, sticky=E+W, padx=0, pady=0)
 
 
 #날씨 아이콘 경로
-img_weather0 = Image.open(r"D:\hajun\개인\VScode\pythonworkspace\.vscode\단대소고\사진\맑음.png")
-img_weather1 = Image.open(r"D:\hajun\개인\VScode\pythonworkspace\.vscode\단대소고\사진\구름.png")
-img_weather2 = Image.open(r"D:\hajun\개인\VScode\pythonworkspace\.vscode\단대소고\사진\비.png")
-img_weather3 = Image.open(r"D:\hajun\개인\VScode\pythonworkspace\.vscode\단대소고\사진\눈.png")
-img_weather4 = Image.open(r"D:\hajun\개인\VScode\pythonworkspace\.vscode\단대소고\사진\바람.png")
+img_weather_sun = Image.open(r"D:\hajun\개인\VScode\pythonworkspace\.vscode\단대소고\사진\맑음.png")
+img_weather_cloud = Image.open(r"D:\hajun\개인\VScode\pythonworkspace\.vscode\단대소고\사진\구름.png")
+img_weather_rain = Image.open(r"D:\hajun\개인\VScode\pythonworkspace\.vscode\단대소고\사진\비.png")
+img_weather_snow = Image.open(r"D:\hajun\개인\VScode\pythonworkspace\.vscode\단대소고\사진\눈.png")
+img_weather_wind = Image.open(r"D:\hajun\개인\VScode\pythonworkspace\.vscode\단대소고\사진\바람.png")
 
-#날씨 아이콘
-if rain_type == "0":
-    img_weather = img_weather0 # 맑음
-elif rain_type == "1"or"4":
-    img_weather = img_weather2 # 비
-elif rain_type == "2"or"3":
-    img_weather = img_weather3 # 눈
 
-# img_weather = img_weather0 # 임시 맑음
+# #날씨 아이콘
+# if rain_type == "0":
+#     img_weather = img_weather_sun # 맑음
+# elif rain_type == "1"or"4":
+#     img_weather = img_weather_rain # 비
+# elif rain_type == "2"or"3":
+#     img_weather = img_weather_snow # 눈
+code = weather(fc["weathercode"][ntime])
+if code == 0:
+    img_weather = img_weather_sun # 맑음
+elif code == 1:
+    img_weather = img_weather_cloud # 구름
+elif code == 2:
+    img_weather = img_weather_rain # 비
+elif code == 3:
+    img_weather = img_weather_snow # 눈
+
+# img_weather = img_weather_sun # 임시 맑음
 
 img_resized_weather = img_weather.resize((75, 75), Image.LANCZOS)
 img_weather = ImageTk.PhotoImage(img_resized_weather, master=win)
@@ -497,7 +482,7 @@ lbl_weather.pack(side="left", padx=10, pady=10)
 lbl_temp = Label(frm_weather, text=temp, font=font_temp, fg=blue)
 lbl_temp.pack(side='left', padx=10, pady=10)
 
-lbl_humidity = Label(frm_weather, text=("습도: "+humidity+"%"), font=font_small)
+lbl_humidity = Label(frm_weather, text=("습도: "+humidity), font=font_small)
 lbl_humidity.pack(side='left', padx=10, pady=10)
 
 # lbl_ment = Label(frm_weather, text="", font=font_default)   #<-- 날씨에 따라 멘트 변경
@@ -528,26 +513,55 @@ frm_forecast.bind("<Configure>", update_forecast_scrollregion)
 
 
 
-img_weather_fc = [img_weather0,img_weather1,img_weather2,img_weather3,img_weather4] #임시 아이콘 리스트
+img_weather_fc = []
+for i in range(1,13):
+    code_1 = weather(fc["weathercode"][ntime + i])
+    if code_1 == 0:
+        img_weather_fc.append(img_weather_sun) # 맑음
+    elif code_1 == 1:
+        img_weather_fc.append(img_weather_cloud) # 구름
+    elif code_1 == 2:
+        img_weather_fc.append(img_weather_rain) # 비
+    elif code_1 == 3:
+        img_weather_fc.append(img_weather_snow) # 눈
+
+
+# img_weather_fc = [img_weather_sun,img_weather_cloud,img_weather_rain,img_weather_snow,img_weather_wind] #임시 아이콘 리스트
 
 
 
-for i in range(1, 13):
-    if i+ntime <= 24:
-        lbl_forecast = Label(frm_forecast, text=f"{i+ntime}시", font=font_small, width=6)
-    else:
-        lbl_forecast = Label(frm_forecast, text=f"{i+ntime-24}시", font=font_small, width=6)
-    lbl_forecast.grid(row=0, column=i-1, padx=0, pady=5)
+# for i in range(1, 25-ntime):
+#     if i+ntime <= 24:
+#         lbl_forecast = Label(frm_forecast, text=f"{i+ntime}시", font=font_small, width=6)
+#     else:
+#         lbl_forecast = Label(frm_forecast, text=f"{i+ntime-24}시", font=font_small, width=6)
+#     lbl_forecast.grid(row=0, column=i-1, padx=0, pady=5)
     
-    img_resized = img_weather_fc[i % 5].resize((30, 30), Image.LANCZOS)
+#     img_resized = img_weather_fc[i % 5].resize((30, 30), Image.LANCZOS)
+#     img_tk = ImageTk.PhotoImage(img_resized, master=win)
+#     img_weather_fc.append(img_tk)  # 참조 유지
+    
+#     lbl_forecast_img = Label(frm_forecast, image=img_tk)
+#     lbl_forecast_img.grid(row=1, column=i-1, padx=0, pady=5)
+    
+#     lbl_forecast_temp = Label(frm_forecast, text="25°C", font=font_small)
+#     lbl_forecast_temp.grid(row=2, column=i-1, padx=0, pady=5)
+
+for i in range(12):
+    hour = (ntime + i+1) % 24
+    lbl_forecast = Label(frm_forecast, text=f"{hour}시", font=font_small, width=6)
+    lbl_forecast.grid(row=0, column=i, padx=0, pady=5)
+
+    img_resized = img_weather_fc[i].resize((30, 30), Image.LANCZOS)
     img_tk = ImageTk.PhotoImage(img_resized, master=win)
-    img_weather_fc.append(img_tk)  # 참조 유지
-    
+
     lbl_forecast_img = Label(frm_forecast, image=img_tk)
-    lbl_forecast_img.grid(row=1, column=i-1, padx=0, pady=5)
-    
-    lbl_forecast_temp = Label(frm_forecast, text="25°C", font=font_small)
-    lbl_forecast_temp.grid(row=2, column=i-1, padx=0, pady=5)
+    lbl_forecast_img.image = img_tk  # 참조 유지
+    lbl_forecast_img.grid(row=1, column=i, padx=0, pady=5)
+
+    forecast_temp = str(fc["temperature_2m"][ntime + i]) + "°C"
+    lbl_forecast_temp = Label(frm_forecast, text=forecast_temp, font=font_small)
+    lbl_forecast_temp.grid(row=2, column=i, padx=0, pady=5)
 
 
 
