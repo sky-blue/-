@@ -3,7 +3,7 @@ import tkinter.font as Font
 import tkinter.ttk as ttk
 from PIL import Image, ImageTk
 import time
-import requests
+import requests  #pip install requests
 import json
 import re
 from datetime import date, datetime, timedelta
@@ -212,50 +212,52 @@ params_fc = {
 
 response_fc = requests.get(url_fc, params=params_fc)
 
-# data_fc = response_fc.json()
-# fcdata = data_fc["response"]["body"]["items"]["item"]
-
-# # 3️⃣ 현재 시간 기준으로 데이터 정리
-# # 시간별, 카테고리별 딕셔너리 생성
-# forecast_dict = {}
-# for item in fcdata:
-#     t = item['fcstTime']
-#     category = item['category']
-#     value = item['fcstValue']
-#     forecast_dict.setdefault(t, {})[category] = value
-
-# # 4️⃣ 현재 날씨: 첫 번째 데이터 기준 시간
-# latest_time = fcdata[0]['fcstTime']
-# current_weather = forecast_dict[latest_time]
-
-# rain_type = current_weather.get("PTY")  # 강수형태
-# temp      = current_weather.get("T1H")  # 기온
-# humidity  = current_weather.get("REH")  # 습도
-
-
-# print(current_weather)
-
-# # 5️⃣ 현재 시각부터 12시간 후까지 1시간 간격 예보
-# now = datetime.now()
-# next_12h = [now + timedelta(hours=i) for i in range(0, 13)]
-# next_12h_str = [dt.strftime("%H%M") for dt in next_12h]
-
-# print("\n📊 12시간 예보 (1시간 단위):")
-# for t in next_12h_str:
-#     if t in forecast_dict:
-#         print(t, forecast_dict[t])
-
+data_fc = response_fc.json()
+fcdata = data_fc["response"]["body"]["items"]["item"]
 
 print(response_fc.text)
 
 
-#현재 날씨 정보
-# temp = fc_dict.get('T1H')  # 기온
-# humidity = fc_dict.get('REH')  # 습도
-# rain_type = fc_dict.get('PTY')  # 강수형태
-# rain_1h = fc_dict.get('RN1')  # 1시간 강수량
+# 3️⃣ 현재 시간 기준으로 데이터 정리
+# 시간별, 카테고리별 딕셔너리 생성
+fc_dict = {}
+for item in fcdata:
+    t = item['baseTime']  #fcstTime
+    category = item['category']
+    value = item['obsrValue']  #fcstValue
+    fc_dict.setdefault(t, {})[category] = value
 
-# img_weather_fc = []
+# 4️⃣ 현재 날씨: 첫 번째 데이터 기준 시간
+latest_time = fcdata[0]['baseTime']  #fcstTime
+current_weather = fc_dict[latest_time]
+
+rain_type = current_weather.get("PTY")  # 강수형태
+temp      = current_weather.get("T1H")  # 기온
+humidity  = current_weather.get("REH")  # 습도
+
+
+print(current_weather)
+
+# 5️⃣ 현재 시각부터 12시간 후까지 1시간 간격 예보
+now = datetime.now()
+next_12h = [now + timedelta(hours=i) for i in range(0, 13)]
+next_12h_str = [dt.strftime("%H%M") for dt in next_12h]
+
+print("\n📊 12시간 예보 (1시간 단위):")
+for t in next_12h_str:
+    if t in fc_dict:
+        print(t, fc_dict[t])
+
+
+
+
+#현재 날씨 정보
+temp = fc_dict.get('T1H')  # 기온
+humidity = fc_dict.get('REH')  # 습도
+rain_type = fc_dict.get('PTY')  # 강수형태
+rain_1h = fc_dict.get('RN1')  # 1시간 강수량
+
+img_weather_fc = []
 
 
 
