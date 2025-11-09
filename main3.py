@@ -4,6 +4,7 @@ from PIL import Image, ImageTk
 import requests
 import re
 import tkinter.font as Font
+import tkinter.ttk as ttk
 import time
 
 
@@ -15,14 +16,18 @@ win.resizable(False,False)
 #변수
 blue = "#007fff"
 DKSH = '#164e93'
-today = int(date.today().strftime("%Y%m%d"))
 
+today = int(date.today().strftime("%Y%m%d"))
+date = int(date.today().strftime('%d'))
 cur_hour = int(time.strftime('%H'))
 
 font_small = Font.Font(family="페이퍼로지 2 ExtraLight", size=10)
 font_default = Font.Font(family="페이퍼로지 3 Light", size=12)
+font_scj = Font.Font(family="페이퍼로지 3 Light", size=13)
 font_medium = Font.Font(family="페이퍼로지 4 regular", size=15)
+font_meal = Font.Font(family="페이퍼로지 5 medium", size=18)
 font_big = Font.Font(family="페이퍼로지 5 medium", size=25)
+
 
 
 
@@ -52,7 +57,8 @@ params_menu = {
 }
 
 
-def menu():
+def api_menu():
+    global menulist
     menulist = []
 
     response_menu = requests.get(url_menu,params=params_menu)
@@ -62,20 +68,20 @@ def menu():
         menudata = data_menu['mealServiceDietInfo'][1]['row'][0]['DDISH_NM']
         menulistdata = menudata.split('<br/>')
         for item in menulistdata:
-            menu = re.sub(r'\s*\(.*\)', '', item)
+            menu = re.sub(r'\s*\(.*\)', '', item).strip()
             menulist.append(menu)
     else:
         menulist = ['급식정보가 없습니다.']
 
     print(menulist)
 
-menu()
+api_menu()
 
 
 #시간표 API
-url_sbjt = "https://open.neis.go.kr/hub/hisTimetable"
+url_scj = "https://open.neis.go.kr/hub/hisTimetable"
 
-sbjt_map = {
+scj_map = {
     "인공지능 수학": "인수",
     "진로와 직업": "직업",
     "진로활동" : "진로",
@@ -116,8 +122,8 @@ sbjt_map = {
     "동아리활동" : "창체"
 }
 
-def sbjt(sc_grade,sc_class):
-    params_sbjt_td = {
+def api_scj(sc_grade,sc_class):
+    params_scj_td = {
         'KEY' : key_sc,
         'Type' : 'json',
         'pIndex' : '1',
@@ -130,7 +136,7 @@ def sbjt(sc_grade,sc_class):
         'TI_TO_YMD' : today
         }
 
-    params_sbjt_tm = {
+    params_scj_tm = {
         'KEY' : key_sc,
         'Type' : 'json',
         'pIndex' : '1',
@@ -143,29 +149,29 @@ def sbjt(sc_grade,sc_class):
         'TI_TO_YMD' : today+1
         }
 
-    global sbjt_td,sbjt_tm
+    global scj_td,scj_tm
 
-    response_sbjt_td = requests.get(url_sbjt,params=params_sbjt_td)
-    data_sbjt_td = response_sbjt_td.json()
+    response_scj_td = requests.get(url_scj,params=params_scj_td)
+    data_scj_td = response_scj_td.json()
 
-    if 'hisTimetable' in data_sbjt_td:
-        rows = data_sbjt_td['hisTimetable'][1]['row']
-        sbjt_td = [sbjt_map.get(row['ITRT_CNTNT'],row['ITRT_CNTNT'])for row in rows]
+    if 'hisTimetable' in data_scj_td:
+        rows = data_scj_td['hisTimetable'][1]['row']
+        scj_td = [scj_map.get(row['ITRT_CNTNT'],row['ITRT_CNTNT'])for row in rows]
     else:
-        sbjt_td = ['-','-','-','-','-','-','-']
-    print(sbjt_td)
+        scj_td = ['-','-','-','-','-','-','-']
+    print(scj_td)
 
-    response_sbjt_tm = requests.get(url_sbjt,params=params_sbjt_tm)
-    data_sbjt_tm = response_sbjt_tm.json()
+    response_scj_tm = requests.get(url_scj,params=params_scj_tm)
+    data_scj_tm = response_scj_tm.json()
 
-    if 'hisTimetable' in data_sbjt_tm:
-        rows = data_sbjt_tm['hisTimetable'][1]['row']
-        sbjt_tm = [sbjt_map.get(row['ITRT_CNTNT'],row['ITRT_CNTNT'])for row in rows]
+    if 'hisTimetable' in data_scj_tm:
+        rows = data_scj_tm['hisTimetable'][1]['row']
+        scj_tm = [scj_map.get(row['ITRT_CNTNT'],row['ITRT_CNTNT'])for row in rows]
     else:
-        sbjt_tm = ['-','-','-','-','-','-','-']
-    print(sbjt_tm)
+        scj_tm = ['-','-','-','-','-','-','-']
+    print(scj_tm)
 
-sbjt(기본학년,기본반)
+api_scj(기본학년,기본반)
 
 
 
@@ -181,14 +187,16 @@ params_fc = {
 
 response_fc = requests.get(url_fc,params_fc)
 data_fc = response_fc.json()
-print(data_fc)
 fc = data_fc['hourly']
+
+print(fc['temperature_2m'])
+print(fc['relative_humidity_2m'])
 
 #현재날시
 temp = str(fc['temperature_2m'][cur_hour])+"°C"
 hum = str(fc['relative_humidity_2m'][cur_hour])+"%"
 
-def weather(code):
+def weather_code(code):
     if code == 0:
         return 0 #맑음
     elif code in [1, 2, 3]:
@@ -204,14 +212,17 @@ def weather(code):
 
 #---화면구성---#
 
+frm_top = Frame(win)
+frm_top.pack(fill='x', padx=30, pady=10)
+
 #로고
 img_DKSH = Image.open(r"D:\hajun\개인\VScode\pythonworkspace\.vscode\단대소고\사진\단대소고.png")
 width_D = int(img_DKSH.width*0.1)
 hight_D = int(img_DKSH.height*0.1)
-img_resize_DKSH = img_DKSH.resize((width_D,hight_D), Image.LANCZOS)
-img_DKSH2 = ImageTk.PhotoImage(img_resize_DKSH, master=win)
-lbl_DKSH = Label(win, image=img_DKSH2)
-lbl_DKSH.pack(side='left', padx=10, pady=10)
+img_DKSH_rsize = img_DKSH.resize((width_D,hight_D), Image.LANCZOS)
+img_DKSH = ImageTk.PhotoImage(img_DKSH_rsize, master=win)
+lbl_DKSH_img = Label(frm_top, image=img_DKSH)
+lbl_DKSH_img.pack(side='left', padx=10, pady=10)
 
 
 #다짐 엔트리
@@ -220,22 +231,262 @@ def clear_note(event):
     ent_note.unbind("<Button-1>")
     ent_note.config(fg="black")
 
-ent_note = Entry(win, width=40, font=font_default)
+ent_note = Entry(frm_top, width=40, font=font_default)
 ent_note.pack(side='left', padx=10, pady=10, ipady=3)
 ent_note.config(fg="gray")
 ent_note.bind("<Button-1>", clear_note)
 ent_note.insert(0, "오늘의 다짐")
 
 
-#시간 라벨
+#시계
 def update_time():
     cur_time = time.strftime("%H:%M:%S")
     lbl_time.config(text=cur_time)
     win.after(100, update_time)
 
-lbl_time = Label(win, text="", font=font_medium)
-lbl_time.pack(side='left', padx=10, pady=10)
+lbl_time = Label(frm_top, text="", font=font_medium)
+lbl_time.pack(side='right', padx=10, pady=10)
 
+img_clock = Image.open(r'D:\hajun\개인\VScode\pythonworkspace\.vscode\단대소고\사진\시계.png')
+img_clock_rsize = img_clock.resize((35,35), Image.LANCZOS)
+img_clock = ImageTk.PhotoImage(img_clock_rsize, master=win)
+lbl_clock_img = Label(frm_top, image=img_clock)
+lbl_clock_img.pack(side='right', padx=10, pady=10)
+
+#구분선
+def line():
+    frm_line = Frame(win)
+    frm_line.pack(fill='x', padx=15)
+    cnv_line = Canvas(frm_line, height=1, bg='gray')
+    cnv_line.pack(side='top', fill='x')
+
+line()
+
+
+
+#정보 프레임
+frm_info = Frame(win)
+frm_info.pack(fill='x', pady=10)
+
+#시간표 업뎃 프레임
+frm_scj_update = Frame(frm_info)
+frm_scj_update.grid(row=0, column=0, columnspan=3, sticky='ew', padx=40, pady=10)
+
+#학년선택
+scj_grade = [1,2,3]
+comb_grade = ttk.Combobox(frm_scj_update, height=5, width=10, values=scj_grade, state='readonly')
+comb_grade.grid(row=0, column=0, padx=5, pady=5)
+comb_grade.set('학년')
+
+#반선택
+scj_class = [1,2,3,4,5]
+comb_class = ttk.Combobox(frm_scj_update, height=5, width=10, values=scj_class, state='readonly')
+comb_class.grid(row=0, column=2, padx=5, pady=5)
+comb_class.set('반')
+
+#시간표
+frm_scj = Frame(frm_info)
+frm_scj.grid(row=1, column=0, rowspan=7, columnspan=3, sticky='ew', padx=(30,50))
+
+lbl_scj = Label(frm_scj, text='시간표', font=font_medium, width=4)
+lbl_scj.grid(row=0, column=0, sticky='ewsn', pady=5)
+
+lbl_td = Label(frm_scj, text=f'오늘({date})', font=font_medium, width=7)
+lbl_td.grid(row=0, column=1, padx=10, pady=5)
+lbl_tm = Label(frm_scj, text=f'오늘({date+1})', font=font_medium, width=7)
+lbl_tm.grid(row=0, column=2, padx=10, pady=5)
+
+for i in range(1,8):
+    lbl_scj_time = Label(frm_scj, text=f'{i}교시', font=font_scj, width=7)
+    lbl_scj_time.grid(row=i, column=0, sticky='ewsn', pady=10)
+
+def scj():
+    global lbl_scj_td, lbl_scj_tm
+    for i,t in enumerate(scj_td, start=1):
+        lbl_scj_td = Label(frm_scj, text=t, font=font_scj, width=7)
+        lbl_scj_td.grid(row= i, column=1, padx=5, pady=10)
+    for i,t in enumerate(scj_tm, start=1):
+        lbl_scj_tm = Label(frm_scj, text=t, font=font_scj, width=7)
+        lbl_scj_tm.grid(row=i, column=2, padx=5, pady=10)
+
+scj()
+
+
+#시간표 검색
+def update_scj():
+    api_scj(comb_grade.get(), comb_class.get())
+    lbl_scj_td.destroy()
+    lbl_scj_tm.destroy()
+    scj()
+
+btn_scj = Button(frm_scj_update, text='검색', width=4, command=update_scj)
+btn_scj.grid(row=0, column=3, padx=5, pady=5)
+
+
+
+#날씨 프레임
+frm_fc_info = Frame(frm_info)
+frm_fc_info.grid(row=0, column=4, rowspan=3, sticky='ew', padx=(40,20), pady=5)
+
+#온도 프레임
+frm_weather = Frame(frm_fc_info)
+frm_weather.grid(row=0, column=0, sticky='ew')
+
+#날씨 아이콘 경로
+img_weather_sun = Image.open(r"D:\hajun\개인\VScode\pythonworkspace\.vscode\단대소고\사진\맑음.png")
+img_weather_moon = Image.open(r'D:\hajun\개인\VScode\pythonworkspace\.vscode\단대소고\사진\달.png')
+img_weather_cloud = Image.open(r"D:\hajun\개인\VScode\pythonworkspace\.vscode\단대소고\사진\구름.png")
+img_weather_rain = Image.open(r"D:\hajun\개인\VScode\pythonworkspace\.vscode\단대소고\사진\비.png")
+img_weather_snow = Image.open(r"D:\hajun\개인\VScode\pythonworkspace\.vscode\단대소고\사진\눈.png")
+
+#날씨 아이콘
+code_weather = weather_code(fc['weathercode'][cur_hour])
+if code_weather == 0:
+    if 20 < cur_hour or cur_hour < 6:
+        img_weather = img_weather_moon #달
+    else:
+        img_weather = img_weather_sun # 맑음
+elif code_weather == 1:
+    img_weather = img_weather_cloud # 구름
+elif code_weather == 2:
+    img_weather = img_weather_rain # 비
+elif code_weather == 3:
+    img_weather = img_weather_snow # 눈
+
+img_weather_rsize = img_weather.resize((75,75), Image.LANCZOS)
+img_weather = ImageTk.PhotoImage(img_weather_rsize, master=win)
+lbl_weather_img = Label(frm_weather, image=img_weather)
+lbl_weather_img.pack(side='left', padx=10, pady=10)
+
+#온습도 라벨
+lbl_temp = Label(frm_weather, text=temp, font=font_big, fg=blue)
+lbl_temp.pack(side='left', padx=10, pady=10)
+
+lbl_hum = Label(frm_weather, text=hum, font=font_small)
+lbl_hum.pack(side='left', padx=10, pady=10)
+
+#날씨 예보 부모 프레임
+frm_fc_container = Frame(frm_fc_info)
+frm_fc_container.grid(row=1, column=0, sticky='ew', pady=10)
+
+#날씨 예보 캔버스
+canv_fc = Canvas(frm_fc_container, height=100)
+canv_fc.pack(side='top', fill='both')
+
+#날씨 예보 스크롤바
+scrbar_fc = ttk.Scrollbar(frm_fc_container, orient='horizontal', command=canv_fc.xview)
+scrbar_fc.pack(side='bottom', fill='x')
+canv_fc.config(xscrollcommand=scrbar_fc.set)
+
+#날씨 예보 프레임
+frm_fc = Frame(canv_fc)
+canv_fc.create_window((0,0), window=frm_fc, anchor='nw')
+
+def update_scrbar_fc(event):
+    canv_fc.config(scrollregion=canv_fc.bbox('all'))
+
+frm_fc.bind('<Configure>', update_scrbar_fc)
+
+#날씨 예보 아이콘
+img_weather_fc = []
+for i in range(1,13):
+    code_fc = weather_code(fc['weathercode'][cur_hour+i])
+    hour = (cur_hour+i) % 24
+    if code_fc == 0:
+        if 20 < hour or hour < 6:
+            img_weather_fc.append(img_weather_moon) #달
+        else:
+            img_weather_fc.append(img_weather_sun) # 맑음
+    elif code_fc == 1:
+        img_weather_fc.append(img_weather_cloud) # 구름
+    elif code_fc == 2:
+        img_weather_fc.append(img_weather_rain) # 비
+    elif code_fc == 3:
+        img_weather_fc.append(img_weather_snow) # 눈
+
+for i in range(12):
+    hour = (cur_hour+i+1) % 24
+    lbl_fc = Label(frm_fc, text=f'{hour}시', font=font_small, width=6)
+    lbl_fc.grid(row=0, column=i, pady=5)
+
+    img_fc_rsize = img_weather_fc[i].resize((30,30), Image.LANCZOS)
+    img_fc = ImageTk.PhotoImage(img_fc_rsize, master=win)
+    
+    lbl_fc_img = Label(frm_fc, image=img_fc)
+    lbl_fc_img.image = img_fc
+    lbl_fc_img.grid(row=1, column=i, pady=5)
+
+    fc_temp = str(fc['temperature_2m'][cur_hour+i]) + "°C"
+    lbl_fc_temp = Label(frm_fc, text=fc_temp, font=font_small)
+    lbl_fc_temp.grid(row=2, column=i, pady=5)
+
+
+
+#급식 프레임
+frm_meal = Frame(frm_info)
+frm_meal.grid(row=4, column=4, sticky='ew', padx=(40,20))
+
+#급식 아이콘
+img_meal = Image.open(r'D:\hajun\개인\VScode\pythonworkspace\.vscode\단대소고\사진\급식.png')
+img_meal_rsize = img_meal.resize((55,55), Image.LANCZOS)
+img_meal = ImageTk.PhotoImage(img_meal_rsize, master=win)
+lbl_meal_img = Label(frm_meal, image=img_meal)
+lbl_meal_img.pack(side='left', padx=10, pady=5)
+
+lbl_meal = Label(frm_meal, text='급식', font=font_meal)
+lbl_meal.pack(side='left')
+
+#급식메뉴 프레임
+frm_menu = Frame(frm_info)
+frm_menu.grid(row=5, column=4, sticky='ew', padx=(40,20))
+
+lbl_menu = Label(frm_menu, text=menulist[0:3], font=font_default)
+lbl_menu.pack(anchor="w", padx=10, pady=5)
+lbl_menu = Label(frm_menu, text=menulist[3:6], font=font_default)
+lbl_menu.pack(anchor="w", padx=10, pady=5)
+lbl_menu = Label(frm_menu, text=menulist[6:], font=font_default)
+lbl_menu.pack(anchor="w", padx=10, pady=5)
+
+
+#구분선
+line()
+
+
+#개인 프레임
+frm_user = Frame(win)
+frm_user.pack(side='top', fill='x', padx=10)
+
+#메모 프레임
+frm_memo = Frame(frm_user)
+frm_memo.grid(row=0, column=0, rowspan=10, padx=30, pady=20)
+
+#메모
+txt_memo = Text(frm_memo, height=12, width=35, font=font_default, wrap='word')
+txt_memo.pack(side='left', fill='both')
+
+#메모 스크롤바
+scrbar_memo = ttk.Scrollbar(frm_memo, command=txt_memo.yview)
+scrbar_memo.pack(side='right', fill='y')
+
+txt_memo.config(yscrollcommand=scrbar_memo.set)
+
+
+
+
+#할일 추가 엔트리
+def clear_todo(event):
+    ent_todo.delete(0, END)
+    ent_todo.unbind('<Button-1>')
+    ent_todo.config(fg='black')
+
+ent_todo = Entry(frm_user, font=font_default)
+ent_todo.grid(row=0, column=1, sticky='ew', padx=30, pady=(10,20), ipadx=3)
+ent_todo.config(fg='gray')
+ent_todo.insert(0, '할 일 (enter로 추가)')
+ent_todo.bind('<Button-1>', clear_todo)
+
+
+#할일 부모 프레임
 
 
 update_time()
