@@ -1,5 +1,5 @@
 from tkinter import*
-from datetime import date, datetime, timedelta
+from datetime import date
 from PIL import Image, ImageTk
 import requests
 import re
@@ -15,7 +15,6 @@ win.resizable(False,False)
 
 #변수
 blue = "#007fff"
-DKSH = '#164e93'
 
 today = int(date.today().strftime("%Y%m%d"))
 date = int(date.today().strftime('%d'))
@@ -92,12 +91,15 @@ scj_map = {
     "공통영어2" : "영어",
     "토익연습일반" : "토익",
     "임베디드 소프트웨어 공학" : "임네",
+    "컴퓨터 네트워크" : "임네",   #<-- ?? 다른 과목인데 같은 이름
+    "데이터과학과 머신러닝" : "빅데",
+    "* 빅데이터 분석 결과 시각화" : "빅데",  #<-- ?? 
+    "* 탐색적 데이터 분석" : "빅데",   #<-- ???
     "공업수학의 기초" : "공수",
     "공업 일반" : "공일",
     "자료 구조" : "자구",
     "수학Ⅱ" : "수Ⅱ",
     "영어Ⅱ" : "영 Ⅱ",
-    "데이터과학과 머신러닝" : "빅데",
     "4차 산업혁명과 윤리" : "윤리",
     "성공적인 직업생활" : "성직",
     "운영체제" : "운체",
@@ -293,7 +295,7 @@ lbl_scj.grid(row=0, column=0, sticky='ewsn', pady=5)
 
 lbl_td = Label(frm_scj, text=f'오늘({date})', font=font_medium, width=7)
 lbl_td.grid(row=0, column=1, padx=10, pady=5)
-lbl_tm = Label(frm_scj, text=f'오늘({date+1})', font=font_medium, width=7)
+lbl_tm = Label(frm_scj, text=f'내일({date+1})', font=font_medium, width=7)
 lbl_tm.grid(row=0, column=2, padx=10, pady=5)
 
 for i in range(1,8):
