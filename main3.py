@@ -325,7 +325,7 @@ btn_scj.grid(row=0, column=3, padx=5, pady=5)
 
 
 #날씨 프레임
-frm_fc_info = Frame(frm_info)
+frm_fc_info = Frame(frm_info, relief='solid', bd=2)
 frm_fc_info.grid(row=0, column=4, rowspan=3, sticky='ew', padx=(40,20), pady=5)
 
 #온도 프레임
@@ -367,23 +367,23 @@ lbl_hum.pack(side='left', padx=10, pady=10)
 
 #날씨 예보 부모 프레임
 frm_fc_container = Frame(frm_fc_info)
-frm_fc_container.grid(row=1, column=0, sticky='ew', pady=10)
+frm_fc_container.grid(row=1, column=0, rowspan=2, sticky='ew', pady=10)
 
 #날씨 예보 캔버스
-canv_fc = Canvas(frm_fc_container, height=100)
-canv_fc.pack(side='top', fill='both')
+cnv_fc = Canvas(frm_fc_container, height=100)
+cnv_fc.pack(side='top', fill='both')
 
 #날씨 예보 스크롤바
-scrbar_fc = ttk.Scrollbar(frm_fc_container, orient='horizontal', command=canv_fc.xview)
+scrbar_fc = ttk.Scrollbar(frm_fc_container, orient='horizontal', command=cnv_fc.xview)
 scrbar_fc.pack(side='bottom', fill='x')
-canv_fc.config(xscrollcommand=scrbar_fc.set)
+cnv_fc.config(xscrollcommand=scrbar_fc.set)
 
 #날씨 예보 프레임
-frm_fc = Frame(canv_fc)
-canv_fc.create_window((0,0), window=frm_fc, anchor='nw')
+frm_fc = Frame(cnv_fc)
+cnv_fc.create_window((0,0), window=frm_fc, anchor='nw')
 
 def update_scrbar_fc(event):
-    canv_fc.config(scrollregion=canv_fc.bbox('all'))
+    cnv_fc.config(scrollregion=cnv_fc.bbox('all'))
 
 frm_fc.bind('<Configure>', update_scrbar_fc)
 
@@ -419,6 +419,7 @@ for i in range(12):
     fc_temp = str(fc['temperature_2m'][cur_hour+i]) + "°C"
     lbl_fc_temp = Label(frm_fc, text=fc_temp, font=font_small)
     lbl_fc_temp.grid(row=2, column=i, pady=5)
+
 
 
 
@@ -487,6 +488,50 @@ ent_todo.bind('<Button-1>', clear_todo)
 
 
 #할일 부모 프레임
+frm_todo_container = Frame(frm_user)
+frm_fc_container.grid(row=1, column=1, padx=30)
+
+#할일 스크롤바
+xscrbar_todo = ttk.Scrollbar(frm_todo_container, orient='horizontal')
+xscrbar_todo.pack(side='bottom', fill='x')
+
+yscrbar_todo = ttk.Scrollbar(frm_todo_container)
+yscrbar_todo.pack(side='right', fill='y')
+
+#할일 캔버스
+cnv_todo = Canvas(frm_todo_container, height=190, width=300, xscrollcommand=xscrbar_todo.set, yscrollcommand=yscrbar_todo.set)
+cnv_todo.pack(side='left', fill='both')
+
+#스크롤바 연결
+xscrbar_todo.config(command=cnv_todo.xview)
+yscrbar_todo.config(command=cnv_todo.yview)
+
+#할일 프레임
+frm_todo = Frame(cnv_todo, relief='sunken', bd=3)
+cnv_todo.create_window((0,0), window=frm_todo, anchor='nw')
+
+#스크롤 영역 갱신
+frm_todo.bind('<Configure>', lambda e: cnv_todo.config(scrollregion=cnv_todo.bbox('all')))
+
+
+#할일
+todolist = []
+
+def add_todo(event):
+    todo = ent_note.get()
+    if todo and todo != "할 일 (enter로 추가)":
+        todolist.append(todo)
+        chkb_todo = Checkbutton(frm_todo, text=todo, font=font_default)
+        chkb_todo.pack(anchor='w', padx=10, pady=5)
+        ent_todo.delete(0, END)
+
+        cnv_todo.update_idletasks()
+        cnv_todo.config(scrollregion=cnv_todo.bbox('all'))
+        cnv_todo.yview_moveto(1) #맨 아래로 스크롤
+
+
+ent_todo.bind('<Return>', add_todo)
+
 
 
 update_time()
