@@ -6,11 +6,12 @@ import re
 import tkinter.font as Font
 import tkinter.ttk as ttk
 import time
+import os
 
 
 win = Tk()
 win.title('데일리 학교 알리미')
-win.resizable(False,False)
+win.resizable(False,False) #창 크기 변경 불가
 
 
 #변수
@@ -214,11 +215,17 @@ def weather_code(code):
 
 #---화면구성---#
 
+#상대 경로
+base_path = os.path.dirname(__file__)  #main.py 위치
+img_folder = os.path.join(base_path, '사진')
+
 frm_top = Frame(win)
 frm_top.pack(fill='x', padx=30, pady=10)
 
+
 #로고
-img_DKSH = Image.open(r"D:\hajun\개인\VScode\pythonworkspace\.vscode\단대소고\사진\단대소고.png")
+img_DKSH_path = os.path.join(img_folder, '단대소고.png')
+img_DKSH = Image.open(img_DKSH_path)
 width_D = int(img_DKSH.width*0.1)
 hight_D = int(img_DKSH.height*0.1)
 img_DKSH_rsize = img_DKSH.resize((width_D,hight_D), Image.LANCZOS)
@@ -335,12 +342,20 @@ frm_weather = Frame(frm_fc_info)
 frm_weather.grid(row=0, column=0, sticky='ew')
 
 #날씨 아이콘 경로
-img_weather_sun = Image.open(r"D:\hajun\개인\VScode\pythonworkspace\.vscode\단대소고\사진\맑음.png")
-img_weather_moon = Image.open(r'D:\hajun\개인\VScode\pythonworkspace\.vscode\단대소고\사진\달.png')
-img_weather_cloud = Image.open(r"D:\hajun\개인\VScode\pythonworkspace\.vscode\단대소고\사진\구름.png")
-img_weather_cloud_moon = Image.open(r'D:\hajun\개인\VScode\pythonworkspace\.vscode\단대소고\사진\구름_달.png')
-img_weather_rain = Image.open(r"D:\hajun\개인\VScode\pythonworkspace\.vscode\단대소고\사진\비.png")
-img_weather_snow = Image.open(r"D:\hajun\개인\VScode\pythonworkspace\.vscode\단대소고\사진\눈.png")
+weather_name = ['맑음.png', '달.png', '구름.png', '구름_달.png', '비.png', '눈.png']
+weather_imgs = {}
+
+for name in weather_name:
+    img_weather_path = os.path.join(img_folder, name)
+    weather_imgs[name] = Image.open(img_weather_path)
+
+
+img_weather_sun = weather_imgs['맑음.png']
+img_weather_moon = weather_imgs['달.png']
+img_weather_cloud = weather_imgs['구름.png']
+img_weather_cloud_moon = weather_imgs['구름_달.png']
+img_weather_rain = weather_imgs['비.png']
+img_weather_snow = weather_imgs['눈.png']
 
 #날씨 아이콘
 code_weather = weather_code(fc['weathercode'][cur_hour])
@@ -437,7 +452,8 @@ frm_meal = Frame(frm_info)
 frm_meal.grid(row=4, column=4, sticky='ew', padx=(40,20))
 
 #급식 아이콘
-img_meal = Image.open(r'D:\hajun\개인\VScode\pythonworkspace\.vscode\단대소고\사진\급식.png')
+img_meal_path = os.path.join(img_folder, '급식.png')
+img_meal = Image.open(img_meal_path)
 img_meal_rsize = img_meal.resize((55,55), Image.LANCZOS)
 img_meal = ImageTk.PhotoImage(img_meal_rsize, master=win)
 lbl_meal_img = Label(frm_meal, image=img_meal)
