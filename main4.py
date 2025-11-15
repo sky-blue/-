@@ -1,5 +1,6 @@
 from tkinter import *
 from tkinter import messagebox
+from tkcalendar import Calendar
 from datetime import date
 from PIL import Image, ImageTk
 import tkinter.font as Font
@@ -9,6 +10,8 @@ import time
 import re
 import os
 
+# 이벤트 리스트 초기화
+event_list = []
 
 # 상대 경로
 base_path = os.path.dirname(__file__)  # main.py 위치
@@ -19,17 +22,29 @@ win = Tk()
 win.title("데일리 학교 알리미")
 win.resizable(False,False) # 창 크기 변경 불가
 
-icon_path = os.path.join(img_folder, "아이콘.png") # 창 아이콘
+icon_path = os.path.join(img_folder, "아이콘.png")
 icon = PhotoImage(file=icon_path)
+win.iconphoto(True, icon) # 창 아이콘
 
-win.iconphoto(True, icon)
+# toplevel 달력 창
+top_win = Toplevel(win)
+top_win.title('달력')
+top_win.resizable(False,False)
+top_win.withdraw()
+
+icon_calendar_path = os.path.join(img_folder, "달력.png")
+icon_calendar = PhotoImage(file=icon_calendar_path)
+top_win.iconphoto(False, icon_calendar)
+
+
 
 
 # 변수
 blue = "#007fff"
 
 today = int(date.today().strftime("%Y%m%d"))
-date = int(date.today().strftime("%d"))
+cal_today = date.today()
+today_date = int(date.today().strftime("%d"))
 cur_hour = int(time.strftime("%H"))
 
 font_small = Font.Font(family="페이퍼로지 2 ExtraLight", size=10)
@@ -79,12 +94,11 @@ def api_menu():
         menudata = data_menu["mealServiceDietInfo"][1]["row"][0]["DDISH_NM"]
         menulistdata = menudata.split("<br/>")
         for item in menulistdata:
-            menu = re.sub(r"\s*\(.*\)", "", item).strip()
+            menu = re.sub(r"\s*\(.*\)", "", item).strip() # 급식 메뉴명만 저장
             menulist.append(menu)
     else:
         menulist = ["급식정보가 없습니다."]
 
-    print(menulist)
 
 api_menu()
 
@@ -103,10 +117,10 @@ scj_map = {
     "공통영어2" : "영어",
     "토익연습일반" : "토익",
     "임베디드 소프트웨어 공학" : "임네",
-    "컴퓨터 네트워크" : "임네",   # <-- ?? 다른 과목인데 같은 이름
+    "컴퓨터 네트워크" : "임네",   # <-- ? 다른 과목인데 같은 이름
     "데이터과학과 머신러닝" : "빅데",
-    "* 빅데이터 분석 결과 시각화" : "빅데",  # <-- ?? 
-    "* 탐색적 데이터 분석" : "빅데",   # <-- ???
+    "* 빅데이터 분석 결과 시각화" : "빅데",  # <-- ? 
+    "* 탐색적 데이터 분석" : "빅데",   # <-- ?
     "공업수학의 기초" : "공수",
     "공업 일반" : "공일",
     "자료 구조" : "자구",
@@ -170,10 +184,9 @@ def api_scj(sc_grade,sc_class):
 
     if "hisTimetable" in data_scj_td:
         rows = data_scj_td["hisTimetable"][1]["row"]
-        scj_td = [scj_map.get(row["ITRT_CNTNT"],row["ITRT_CNTNT"])for row in rows]
+        scj_td = [scj_map.get(row["ITRT_CNTNT"],row["ITRT_CNTNT"])for row in rows] #과목 약어가 있다면 변경
     else:
         scj_td = ["-","-","-","-","-","-","-"]
-    print(scj_td)
 
     response_scj_tm = requests.get(url_scj,params=params_scj_tm)
     data_scj_tm = response_scj_tm.json()
@@ -183,7 +196,6 @@ def api_scj(sc_grade,sc_class):
         scj_tm = [scj_map.get(row["ITRT_CNTNT"],row["ITRT_CNTNT"])for row in rows]
     else:
         scj_tm = ["-","-","-","-","-","-","-"]
-    print(scj_tm)
 
 api_scj(기본학년,기본반)
 
@@ -202,9 +214,6 @@ params_fc = {
 response_fc = requests.get(url_fc,params_fc)
 data_fc = response_fc.json()
 fc = data_fc["hourly"]
-
-print(fc["temperature_2m"])
-print(fc["relative_humidity_2m"])
 
 # 현재날시
 temp = str(fc["temperature_2m"][cur_hour])+"°C"
@@ -269,14 +278,38 @@ img_clock = ImageTk.PhotoImage(img_clock_rsize, master=win)
 lbl_clock_img = Label(frm_top, image=img_clock)
 lbl_clock_img.pack(side="right", padx=10, pady=10)
 
-# 구분선
+# 구분선 함수
 def line():
+    global frm_line
     frm_line = Frame(win)
     frm_line.pack(fill="x", padx=15)
+
     cnv_line = Canvas(frm_line, height=1, bg="gray")
-    cnv_line.pack(side="top", fill="x")
+    cnv_line.grid(row=0, column=0, sticky='ew')
+
+
+# toplevel 창이 닫기버튼(X)으로 닫혀서 destrot 된 경우 다시 생성하고숨기기
+top_win.protocol("WM_DELETE_WINDOW", top_win.withdraw)
+
+# 달력 창이 보이면 숨기고 숨겨져있으며 보이기는 함수
+def toggle_top_win():
+    if top_win.winfo_viewable():
+        top_win.withdraw()
+    else:
+        top_win.deiconify()
+        top_win.lift()
 
 line()
+
+# 달력 창 열고 닫는 버튼
+img_cal_path = os.path.join(img_folder, '달력.png')
+img_cal = Image.open(img_cal_path)
+img_cal_rsize = img_cal.resize((25,25), Image.LANCZOS)
+img_cal = ImageTk.PhotoImage(img_cal_rsize, master=win)
+btn_cal = Button(frm_line, image=img_cal, command=toggle_top_win)
+btn_cal.grid(row=0, column=1, padx=(15,0))
+
+frm_line.grid_columnconfigure(0, weight=1)
 
 
 
@@ -305,9 +338,9 @@ frm_scj.grid(row=1, column=0, rowspan=7, columnspan=3, sticky="ew", padx=(30,50)
 lbl_scj = Label(frm_scj, text="시간표", font=font_medium, width=4)
 lbl_scj.grid(row=0, column=0, sticky="ewsn", pady=5)
 
-lbl_td = Label(frm_scj, text=f"오늘({date})", font=font_medium, width=7)
+lbl_td = Label(frm_scj, text=f"오늘({today_date})", font=font_medium, width=7)
 lbl_td.grid(row=0, column=1, padx=10, pady=5)
-lbl_tm = Label(frm_scj, text=f"내일({date+1})", font=font_medium, width=7)
+lbl_tm = Label(frm_scj, text=f"내일({today_date+1})", font=font_medium, width=7)
 lbl_tm.grid(row=0, column=2, padx=10, pady=5)
 
 for i in range(1,8):
@@ -494,6 +527,8 @@ lbl_menu.pack(anchor="w", padx=10, pady=5)
 
 # 구분선
 line()
+frm_line.grid_columnconfigure(0, weight=1)
+
 
 
 # 개인 프레임
@@ -516,6 +551,123 @@ txt_memo.config(yscrollcommand=scrbar_memo.set)
 
 
 
+
+
+# ---toplevel--- #
+# 달력 프레임
+cal = Calendar(top_win, selectmode='day', date_pattern='yyyy-mm-dd', showweeknumbers=False, weekendbackground='white', weekendforeground='black', othermonthwebackground='gray93', font=font_default)
+cal.pack(side='left', fill='both', padx=20, pady=20)
+
+# 오늘 날짜 파란 글자색으로
+cal.calevent_create(cal_today, '오늘', 'today')
+cal.tag_config('today', background='white', foreground=blue)
+cal.selection_set(cal_today)
+
+
+
+# 이벤트 프레임
+frm_user_cal = Frame(top_win)
+frm_user_cal.pack(side='right', fill='both', padx=10, pady=20)
+
+# 이벤트명 프레임
+frm_event = Frame(frm_user_cal, width=100)
+frm_event.pack(side='top', fill='x')
+
+# 오늘날짜로 이동
+def go_today():
+    cal.selection_set(cal_today)
+    cal.see(cal_today)
+
+# 오늘날짜로 이동 버튼
+btn_today = Button(frm_event, text='오늘', command=go_today)
+btn_today.pack(side='left', padx=(15,5))
+
+
+# 이벤트명 엔트리 지우기
+def clear_cal(event):
+    ent_cal.delete(0,END)
+    ent_cal.unbind("<Button-1>")
+    ent_cal.config(fg="black")
+
+# 이벤트 추가
+def add_event(event):
+    global event_list
+
+    event_name = ent_cal.get()
+    if not event_name:
+        return
+    
+    cel_date = cal.selection_get()
+    event_date_str = cel_date.strftime('%Y-%m-%d')
+
+    # 중복 이벤트 체크
+    for ev in event_list:
+        if ev['date'] == event_date_str and ev['name'] == event_name:
+            messagebox.showwarning("중복 이벤트", "이미 동일한 날짜에 동일한 이벤트가 있습니다.")
+            ent_cal.delete(0,END)
+            return
+
+    if cel_date != cal_today: # 이벤트 날짜가 오늘이면 글자색 파랑
+        cal.calevent_create(cel_date, event_name, 'event') # 이벤트 추가
+        cal.tag_config('event', background='lightblue', foreground='black')
+    else:
+        cal.calevent_create(cel_date, event_name, 'today_event')
+        cal.tag_config('today_event', background='lightblue', foreground=blue)
+
+    event_list.append({
+        'date' : event_date_str,
+        'name' : event_name
+    })
+
+    tab.insert("", "end", values=(event_date_str, event_name))
+
+    ent_cal.delete(0,END)
+
+# 이벤트명 설정 엔트리
+ent_cal = Entry(frm_event ,width=30, font=font_default)
+ent_cal.pack(side='right', fill='x', padx=(5,25), ipady=3)
+ent_cal.config(fg="gray")
+ent_cal.bind("<Button-1>", clear_cal)
+ent_cal.insert(0, "이벤트명(enter로 추가)")
+ent_cal.bind("<Return>", add_event)
+
+
+
+# 테이블 프레임
+frm_tab = Frame(frm_user_cal)
+frm_tab.pack(side='top', fill='both', padx=10, pady=10)
+
+# 테이블 스크롤바
+scrbar_tab = Scrollbar(frm_tab)
+
+# 이벤트 테이블
+tab = ttk.Treeview(frm_tab, columns=('date', 'name'), show='headings', yscrollcommand=scrbar_tab.set)
+
+# 스크롤바 연결
+scrbar_tab.config(command=tab.yview)
+
+# 스크롤바 배치
+scrbar_tab.pack(side='right', fill='y')
+
+# 테이블 설정
+tab.heading('date', text='날짜')
+tab.heading('name', text='이벤트명')
+
+tab.column('date', width=120, anchor='center')
+tab.column('name', width=240, anchor='w')
+
+tab.pack(fill='both', expand=True, padx=5)
+
+
+
+
+
+
+
+
+
+
 update_time()
+
 
 win.mainloop()
