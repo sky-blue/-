@@ -1,4 +1,5 @@
 from tkinter import *
+from tkinter import messagebox
 from datetime import date
 from PIL import Image, ImageTk
 import tkinter.font as Font
@@ -13,13 +14,13 @@ import os
 base_path = os.path.dirname(__file__)  # main.py 위치
 img_folder = os.path.join(base_path, "아이콘")
 
-icon_path = os.path.join(img_folder, "아이콘.png")
 
 win = Tk()
 win.title("데일리 학교 알리미")
 win.resizable(False,False) # 창 크기 변경 불가
 
-icon = PhotoImage(file=icon_path) # 창 아이콘
+icon_path = os.path.join(img_folder, "아이콘.png") # 창 아이콘
+icon = PhotoImage(file=icon_path)
 
 win.iconphoto(True, icon)
 
@@ -288,14 +289,12 @@ frm_scj_update = Frame(frm_info)
 frm_scj_update.grid(row=0, column=0, columnspan=3, sticky="ew", padx=40, pady=10)
 
 # 학년선택
-scj_grade = [1,2,3]
-comb_grade = ttk.Combobox(frm_scj_update, height=5, width=10, values=scj_grade, state="readonly")
+comb_grade = ttk.Combobox(frm_scj_update, height=5, width=10, values=list(range(1,4)), state="readonly")
 comb_grade.grid(row=0, column=0, padx=5, pady=5)
 comb_grade.set("학년")
 
 # 반선택
-scj_class = [1,2,3,4,5]
-comb_class = ttk.Combobox(frm_scj_update, height=5, width=10, values=scj_class, state="readonly")
+comb_class = ttk.Combobox(frm_scj_update, height=5, width=10, values=list(range(1,6)), state="readonly")
 comb_class.grid(row=0, column=2, padx=5, pady=5)
 comb_class.set("반")
 
@@ -316,23 +315,36 @@ for i in range(1,8):
     lbl_scj_time.grid(row=i, column=0, sticky="ewsn", pady=10)
 
 def scj():
-    global lbl_scj_td, lbl_scj_tm
+    global lbl_scj_td_list, lbl_scj_tm_list
+    lbl_scj_td_list, lbl_scj_tm_list = [], []
     for i,t in enumerate(scj_td, start=1):
         lbl_scj_td = Label(frm_scj, text=t, font=font_scj, width=7)
         lbl_scj_td.grid(row= i, column=1, padx=5, pady=10)
+        lbl_scj_td_list.append(lbl_scj_td)
     for i,t in enumerate(scj_tm, start=1):
         lbl_scj_tm = Label(frm_scj, text=t, font=font_scj, width=7)
         lbl_scj_tm.grid(row=i, column=2, padx=5, pady=10)
+        lbl_scj_tm_list.append(lbl_scj_tm)
 
 scj()
 
 
 # 시간표 검색
 def update_scj():
-    api_scj(comb_grade.get(), comb_class.get())
-    lbl_scj_td.destroy()
-    lbl_scj_tm.destroy()
+    scj_class = comb_class.get()
+    scj_grade = comb_grade.get()
+    if scj_grade == "학년" or scj_class == "반":  # 학년,반 선택했을 때만 API호출
+        messagebox.showwarning("입력 오류", "학년과 반을 모두 선택해주세요.")
+        return
+    api_scj(int(scj_grade), int(scj_class))
+
+    for lbl in lbl_scj_td_list:
+        lbl.destroy()
+    for lbl in lbl_scj_tm_list:
+        lbl.destroy()
     scj()
+
+
 
 btn_scj = Button(frm_scj_update, text="검색", width=4, command=update_scj)
 btn_scj.grid(row=0, column=3, padx=5, pady=5)
@@ -372,9 +384,9 @@ if code_weather == 0:
         img_weather = img_weather_sun # 맑음
 elif code_weather == 1:
     if 18 < cur_hour or cur_hour < 6:
-        img_weather = img_weather_cloud_moon # 구름 달
+        img_weather = img_weather_cloud_moon # 흐림 달
     else:
-        img_weather = img_weather_cloud # 구름
+        img_weather = img_weather_cloud # 흐림
 elif code_weather == 2:
     img_weather = img_weather_rain # 비
 elif code_weather == 3:
@@ -426,9 +438,9 @@ for i in range(1,13):
             img_weather_fc.append(img_weather_sun) # 맑음
     elif code_fc == 1:
         if 18 < hour or hour < 6:
-            img_weather_fc.append(img_weather_cloud_moon) # 구름 달
+            img_weather_fc.append(img_weather_cloud_moon) # 흐림 달
         else:
-            img_weather_fc.append(img_weather_cloud) # 구름
+            img_weather_fc.append(img_weather_cloud) # 흐림
     elif code_fc == 2:
         img_weather_fc.append(img_weather_rain) # 비
     elif code_fc == 3:
