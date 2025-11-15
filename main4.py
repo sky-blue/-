@@ -30,7 +30,7 @@ win.iconphoto(True, icon) # 창 아이콘
 top_win = Toplevel(win)
 top_win.title('달력')
 top_win.resizable(False,False)
-top_win.withdraw()
+top_win.withdraw() # 숨기기
 
 icon_calendar_path = os.path.join(img_folder, "달력.png")
 icon_calendar = PhotoImage(file=icon_calendar_path)
@@ -83,7 +83,7 @@ params_menu = {
 }
 
 
-def api_menu():
+def api_menu(): # 날짜 선택 기능추가 하기 위해 함수로
     global menulist
     menulist = []
 
@@ -291,7 +291,7 @@ def line():
 # toplevel 창이 닫기버튼(X)으로 닫혀서 destrot 된 경우 다시 생성하고숨기기
 top_win.protocol("WM_DELETE_WINDOW", top_win.withdraw)
 
-# 달력 창이 보이면 숨기고 숨겨져있으며 보이기는 함수
+# 달력 창이 보이면 숨기고 숨겨져있으며 보이게하는 함수
 def toggle_top_win():
     if top_win.winfo_viewable():
         top_win.withdraw()
@@ -377,8 +377,6 @@ def update_scj():
         lbl.destroy()
     scj()
 
-
-
 btn_scj = Button(frm_scj_update, text="검색", width=4, command=update_scj)
 btn_scj.grid(row=0, column=3, padx=5, pady=5)
 
@@ -436,6 +434,7 @@ lbl_temp.pack(side="left", padx=10, pady=10)
 
 lbl_hum = Label(frm_weather, text=f"습도:{hum}", font=font_small)
 lbl_hum.pack(side="left", padx=10, pady=10)
+
 
 # 날씨 예보 부모 프레임
 frm_fc_container = Frame(frm_fc_info)
@@ -554,7 +553,7 @@ txt_memo.config(yscrollcommand=scrbar_memo.set)
 
 
 # ---toplevel--- #
-# 달력 프레임
+# 달력
 cal = Calendar(top_win, selectmode='day', date_pattern='yyyy-mm-dd', showweeknumbers=False, weekendbackground='white', weekendforeground='black', othermonthwebackground='gray93', font=font_default)
 cal.pack(side='left', fill='both', padx=20, pady=20)
 
@@ -607,12 +606,12 @@ def add_event(event):
             ent_cal.delete(0,END)
             return
 
-    if cel_date != cal_today: # 이벤트 날짜가 오늘이면 글자색 파랑
+    if cel_date != cal_today:
         cal.calevent_create(cel_date, event_name, 'event') # 이벤트 추가
         cal.tag_config('event', background='lightblue', foreground='black')
     else:
         cal.calevent_create(cel_date, event_name, 'today_event')
-        cal.tag_config('today_event', background='lightblue', foreground=blue)
+        cal.tag_config('today_event', background='lightblue', foreground=blue) # 이벤트 날짜가 오늘이면 글자색 파랑
 
     event_list.append({
         'date' : event_date_str,
@@ -656,10 +655,7 @@ tab.heading('name', text='이벤트명')
 tab.column('date', width=120, anchor='center')
 tab.column('name', width=240, anchor='w')
 
-tab.pack(fill='both', expand=True, padx=5)
-
-
-
+tab.pack(fill='both', padx=5)
 
 
 
