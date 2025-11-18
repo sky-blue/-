@@ -6,6 +6,7 @@ import tkinter.font as Font
 import tkinter.ttk as ttk
 import requests
 import time
+import json
 import re
 import os
 
@@ -39,6 +40,30 @@ font_medium = Font.Font(family="페이퍼로지 4 regular", size=15)
 font_meal = Font.Font(family="페이퍼로지 5 medium", size=18)
 font_big = Font.Font(family="페이퍼로지 5 medium", size=25)
 
+save_file = "user_data.json"
+
+
+
+# 파일 불러오기
+def load_data():
+    try:
+        with open(save_file, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return {
+            "note" : "오늘의 다짐",
+            "grade" : 1,
+            "class" : 1,
+            "memo" : ""
+
+        }
+    
+loaded = load_data()
+
+note = loaded["note"]
+sc_grade = loaded["grade"]
+sc_class = loaded["class"]
+memo = loaded["memo"]
 
 
 
@@ -50,8 +75,6 @@ key_sc = "571668b4449b4ba09ef972d847ee6022"
 # 학교 변수
 시도교육청코드 = "B10"
 학교코드 = "7011489"
-기본학년 = "1"
-기본반 = "1"
 
 
 # 급식 API
@@ -181,7 +204,7 @@ def api_scj(sc_grade,sc_class):
 
     scj_tm = scjdata(data_scj_tm)
 
-api_scj(기본학년,기본반)
+api_scj(sc_grade, sc_class)
 
 
 
@@ -242,9 +265,10 @@ def clear_note(event):
 
 ent_note = Entry(frm_top, width=40, font=font_default)
 ent_note.pack(side="left", padx=10, pady=10, ipady=3)
-ent_note.config(fg="gray")
+if note == "오늘의 다짐":
+    ent_note.config(fg="gray")
+ent_note.insert(0, note)
 ent_note.bind("<Button-1>", clear_note)
-ent_note.insert(0, "오늘의 다짐")
 
 
 # 시계
@@ -285,12 +309,12 @@ frm_scj_update.grid(row=0, column=0, columnspan=3, sticky="ew", padx=40, pady=10
 # 학년선택
 comb_grade = ttk.Combobox(frm_scj_update, height=5, width=10, values=list(range(1,4)), state="readonly")
 comb_grade.grid(row=0, column=0, padx=5, pady=5)
-comb_grade.set("학년")
+comb_grade.set(sc_grade)
 
 # 반선택
 comb_class = ttk.Combobox(frm_scj_update, height=5, width=10, values=list(range(1,6)), state="readonly")
 comb_class.grid(row=0, column=2, padx=5, pady=5)
-comb_class.set("반")
+comb_class.set(sc_class)
 
 # 시간표
 frm_scj = Frame(frm_info)
@@ -501,6 +525,7 @@ frm_memo.grid(row=0, column=0, rowspan=10, padx=30, pady=20)
 # 메모
 txt_memo = Text(frm_memo, height=12, width=68, font=font_default, wrap="word") # 단어 단위로 줄 바꿈
 txt_memo.pack(side="left", fill="both")
+txt_memo.insert("1.0", memo)
 
 # 메모 스크롤바
 scrbar_memo = ttk.Scrollbar(frm_memo, command=txt_memo.yview)
@@ -509,6 +534,25 @@ scrbar_memo.pack(side="right", fill="y")
 txt_memo.config(yscrollcommand=scrbar_memo.set)
 
 
+
+
+
+# 파일로 저장
+def save_data():
+    user_data = {
+        "note" : ent_note.get(),
+        "grade" : comb_grade.get(),
+        "class" : comb_class.get(),
+        "memo"  : txt_memo.get("1.0", "end-1c")
+    }
+    with open(save_file, "w", encoding="utf-8") as f:
+        json.dump(user_data, f, ensure_ascii=False, indent=4)
+    
+    print("저장 완료")
+    win.destroy()
+
+
+win.protocol("WM_DELETE_WINDOW", save_data)
 
 update_time()
 
