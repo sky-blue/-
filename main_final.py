@@ -132,7 +132,8 @@ scj_map = {
 }
 
 def api_scj(sc_grade,sc_class):
-    params_scj_td = {
+    def scj_params(date):
+        return{
         "KEY" : key_sc,
         "Type" : "json",
         "pIndex" : "1",
@@ -141,22 +142,12 @@ def api_scj(sc_grade,sc_class):
         "SD_SCHUL_CODE" : 학교코드,
         "GRADE" : sc_grade,
         "CLASS_NM" :sc_class,
-        "TI_FROM_YMD" : today,
-        "TI_TO_YMD" : today
+        "TI_FROM_YMD" : date,
+        "TI_TO_YMD" : date
         }
+    params_scj_td = scj_params(today)
 
-    params_scj_tm = {
-        "KEY" : key_sc,
-        "Type" : "json",
-        "pIndex" : "1",
-        "pSize" : "100",
-        "ATPT_OFCDC_SC_CODE" : 시도교육청코드,
-        "SD_SCHUL_CODE" : 학교코드,
-        "GRADE" : sc_grade,
-        "CLASS_NM" : sc_class,
-        "TI_FROM_YMD" : today+1,
-        "TI_TO_YMD" : today+1
-        }
+    params_scj_tm = scj_params(today+1)
 
     global scj_td, scj_tm
 
@@ -277,8 +268,8 @@ ent_note = Entry(frm_top, width=40, font=font_default)
 ent_note.pack(side="left", padx=10, pady=10, ipady=3)
 if note == "오늘의 다짐":
     ent_note.config(fg="gray")
+    ent_note.bind("<Button-1>", clear_note)
 ent_note.insert(0, note)
-ent_note.bind("<Button-1>", clear_note)
 
 
 # 시계
